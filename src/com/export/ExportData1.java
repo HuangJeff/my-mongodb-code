@@ -25,15 +25,16 @@ public class ExportData1 {
 	private String db_name = null; //mongo.dumpdb
 	
 	private void initConfig() {
-		mongohome = "D:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
+		mongohome = "C:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
 	    //host = "192.168.1.69"; //mongo.dumphost
 	    //host = "192.168.1.107"; //window's mongo.host
-		host = "localhost"; //window's mongo.host
+		//host = "localhost"; //window's mongo.host
+		host = "192.168.1.123";
 	    port = null; //mongo.dumpport
 	    db_name = "tptrs"; //mongo.dumpdb
 	    
 	    //outputFolder = "D:/mongoExportData/"; //export folder
-	    outputFolder = "D:/mongoExportData_cthouse/"; //export folder
+	    outputFolder = "D:/9.mongoExportData_cthouse/"; //export folder
 	}
 	
 	/**
@@ -52,7 +53,10 @@ public class ExportData1 {
 		if(exportCollectionList != null) {
 			for(String colName : exportCollectionList)
 				try {
-					this.doCommandWork(colName);
+					//匯出所有資料(No Query)
+					//this.doCommandWorkExportAll(colName);
+					//匯出Query的資料
+					this.doCommandWorkExportByQuery(colName);
 				} catch(Exception e) {
 					System.err.println("★Collection Name : " + colName);
 					System.err.println("★Exception : " + e.getMessage());
@@ -83,12 +87,13 @@ public class ExportData1 {
 	}
 	
 	/**
-	 * 
+	 * 匯出所有資料(No Query)
 	 * @throws Exception
 	 */
-	private void doCommandWork(String collectionName) throws Exception {
+	private void doCommandWorkExportAll(String collectionName) throws Exception {
 		String collection = collectionName;
 	    String outputlocation = outputFolder + collectionName + ".txt"; //needs to be asigned a random number name
+	    //String query = "'{created_at : { $gt:ISODate(\"2014-10-24T13:00:00.000Z\"), $lt:ISODate(\"2014-10-24T14:00:00.999Z\") }}'";
 	    
 	    String command = String.format(mongohome + "/bin/mongoexport " +
 	            "--host %s " +
@@ -102,7 +107,8 @@ public class ExportData1 {
 	            //"--csv " +
 	            "-vvvvv",
 	            //host,port,db,collection,query,outputlocation);
-	            host,db_name,collection,outputlocation);
+	            host, db_name, collection, outputlocation);
+	    		//host, db_name, query, collection, outputlocation);
 	    
 	    //logger.info(command);
 	    System.out.println(command);
@@ -117,6 +123,54 @@ public class ExportData1 {
 	            
 	            //logger.info(String.format("Process executed with exit code %d",exitVal));
 	            System.out.println(String.format("Process executed with exit code %d", exitVal));
+	    }catch(Exception e){
+	        //logger.error(String.format("Error running task. Exception %s", e.toString()));
+	    	throw e;
+	    }
+	}
+	
+	/**
+	 * 匯出Query出的資料
+	 * @throws Exception
+	 */
+	private void doCommandWorkExportByQuery(String collectionName) throws Exception {
+		String collection = collectionName;
+	    String outputlocation = outputFolder + collectionName + ".txt"; //needs to be asigned a random number name
+	    String query = "\"{oriUserID : 'a'}\""; //oriUserID 欄位 Type is String
+	    query = "\"{userID : 1}\""; //userID 欄位 Type is Integer
+	    //query = "'{\"created_at\":{\"$gt\":new Date(2014,09,28)}}'";
+	    query = "'{created_at : {$gt : ISODate(\"2014-03-07T22:00:00Z\")}}'";
+	    
+	    String command = String.format(mongohome + "/bin/mongoexport " +
+	            "--host %s " +
+	            //"--port %s " +
+	            "--db %s " + 
+	            "--collection %s " + 
+	            "--query %s " +
+	            //"--fields _id,name,note,sDate,eDate " + 
+	            "--out %s " + 
+	            "--slaveOk true " + 
+	            //"--csv " +
+	            "-vvvvv",
+	            //host,port,db,collection,query,outputlocation);
+	            host, db_name, collection, query, outputlocation);
+	    
+	    //logger.info(command);
+	    System.out.println(command);
+	    try{            
+	            Runtime rt = Runtime.getRuntime();              
+	            Process pr = rt.exec(command);
+	            //StreamGobbler errorGobbler = new StreamGobbler(pr.getErrorStream(),"ERROR",logger);
+	            //StreamGobbler outputGobbler = new StreamGobbler(pr.getInputStream(),"OUTPUT",logger);
+	            //errorGobbler.start();
+	            //outputGobbler.start();
+	            int exitVal = pr.waitFor();
+	            
+	            //logger.info(String.format("Process executed with exit code %d",exitVal));
+	            if(exitVal == 0)
+	            	System.out.println(String.format("Process executed with exit code %d", exitVal));
+	            else 
+	            	System.err.println(String.format("Process executed with exit code %d", exitVal));
 	    }catch(Exception e){
 	        //logger.error(String.format("Error running task. Exception %s", e.toString()));
 	    	throw e;
@@ -141,9 +195,9 @@ public class ExportData1 {
 	    String command = String.format(mongohome + "/bin/mongoexport " +
 	            "--host %s " +
 	            //"--port %s " +
-	            "--db %s " +        
-	            "--collection %s " +                
-	            //"--query %s " +
+	            "--db %s " +
+	            "--collection %s " +  
+	            "--query %s " +
 	            "--fields _id,name,note,sDate,eDate " +               
 	            "--out %s " +           
 	            "--slaveOk true " +         
@@ -176,13 +230,17 @@ public class ExportData1 {
 	 */
 	public static void main(String[] args) {
 		try {
+			//活動代碼
 			String tmp = "1408951308321";
 			
 			//IP：192.168.1.107 mongodb test data
 			tmp = "1392359197344";
 			
 			//IP:localhost  中信房屋
-			tmp = "1401334909981";
+			//完整名稱
+			tmp = "generalData_T01187263_B_1410759774603";
+			//tmp = "generalData_T01187263_B_1402450563984";
+			tmp = "generalData_T01187263_A_1402450563984";
 			
 			new ExportData1(tmp);
 		} catch(Exception e) {
