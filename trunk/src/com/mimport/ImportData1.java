@@ -52,7 +52,7 @@ public class ImportData1 {
 	    
 	    //logger.info(command);
 	    System.out.println(command);
-	    try{            
+	    try{
 	            Runtime rt = Runtime.getRuntime();              
 	            Process pr = rt.exec(command);
 	            //StreamGobbler errorGobbler = new StreamGobbler(pr.getErrorStream(),"ERROR",logger);
