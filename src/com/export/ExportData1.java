@@ -43,14 +43,15 @@ public class ExportData1 {
 	public ExportData1(String activityName) throws Exception {
 		this.initConfig();
 		
-		this.getSpecifyCollections(activityName);
+		//this.getSpecifyCollections(activityName);
+		this.getAllCollections();
 		
 		if(exportCollectionList != null) {
 			for(String colName : exportCollectionList)
 				System.out.println(colName);
 		}
 		
-		if(exportCollectionList != null) {
+		/*if(exportCollectionList != null) {
 			for(String colName : exportCollectionList)
 				try {
 					//匯出所有資料(No Query)
@@ -61,6 +62,24 @@ public class ExportData1 {
 					System.err.println("★Collection Name : " + colName);
 					System.err.println("★Exception : " + e.getMessage());
 				}
+		}*/
+	}
+	
+	/**
+	 * 取得所有的Collection Name
+	 * @throws Exception
+	 */
+	private void getAllCollections() throws Exception {
+		MongoClient mongoClient = new MongoClient(host);
+		
+		DB db = mongoClient.getDB( db_name );
+		
+		Set<String> colls = db.getCollectionNames();
+		
+		for (String s : colls) {
+			if(exportCollectionList == null)
+	    		exportCollectionList = new ArrayList<String>();
+	    	exportCollectionList.add(s);
 		}
 	}
 	
