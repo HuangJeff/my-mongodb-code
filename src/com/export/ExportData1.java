@@ -33,8 +33,8 @@ public class ExportData1 {
 	    port = null; //mongo.dumpport
 	    db_name = "tptrs"; //mongo.dumpdb
 	    
-	    //outputFolder = "D:/mongoExportData/"; //export folder
-	    outputFolder = "D:/9.mongoExportData_cthouse/"; //export folder
+	    outputFolder = "D:/mongoExportData/"; //export folder
+	    //outputFolder = "D:/9.mongoExportData_cthouse/"; //export folder
 	}
 	
 	/**
@@ -43,15 +43,15 @@ public class ExportData1 {
 	public ExportData1(String activityName) throws Exception {
 		this.initConfig();
 		
-		//this.getSpecifyCollections(activityName);
-		this.getAllCollections();
+		this.getSpecifyCollections(activityName);
+		//this.getAllCollections();
 		
 		if(exportCollectionList != null) {
 			for(String colName : exportCollectionList)
 				System.out.println(colName);
 		}
 		
-		/*if(exportCollectionList != null) {
+		if(exportCollectionList != null) {
 			for(String colName : exportCollectionList)
 				try {
 					//匯出所有資料(No Query)
@@ -62,7 +62,7 @@ public class ExportData1 {
 					System.err.println("★Collection Name : " + colName);
 					System.err.println("★Exception : " + e.getMessage());
 				}
-		}*/
+		}
 	}
 	
 	/**
@@ -165,14 +165,16 @@ public class ExportData1 {
 	            //"--port %s " +
 	            "--db %s " + 
 	            "--collection %s " + 
-	            "--query %s " +
+	            //"--query %s " +
 	            //"--fields _id,name,note,sDate,eDate " + 
+	            "--fields oriUserID " +
 	            "--out %s " + 
 	            "--slaveOk true " + 
 	            //"--csv " +
 	            "-vvvvv",
 	            //host,port,db,collection,query,outputlocation);
-	            host, db_name, collection, query, outputlocation);
+	            //host, db_name, collection, query, outputlocation);
+	            host, db_name, collection, outputlocation);
 	    
 	    //logger.info(command);
 	    System.out.println(command);
@@ -260,6 +262,7 @@ public class ExportData1 {
 			tmp = "generalData_T01187263_B_1410759774603";
 			//tmp = "generalData_T01187263_B_1402450563984";
 			tmp = "generalData_T01187263_A_1402450563984";
+			tmp = "MUP_T84305300_B_1503191349478";
 			
 			new ExportData1(tmp);
 		} catch(Exception e) {
