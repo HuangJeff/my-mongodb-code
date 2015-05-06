@@ -33,7 +33,7 @@ public class ExportData1 {
 	    port = null; //mongo.dumpport
 	    db_name = "tptrs"; //mongo.dumpdb
 	    
-	    outputFolder = "D:/mongoExportData/"; //export folder
+	    outputFolder = "D:/9.mongoExportData/"; //export folder
 	    //outputFolder = "D:/9.mongoExportData_cthouse/"; //export folder
 	}
 	
@@ -56,8 +56,14 @@ public class ExportData1 {
 				try {
 					//匯出所有資料(No Query)
 					//this.doCommandWorkExportAll(colName);
+					
 					//匯出Query的資料
-					this.doCommandWorkExportByQuery(colName);
+					//this.doCommandWorkExportByQuery(colName);
+					
+					//匯出資料-1
+					//針對特定欄位過濾
+					String fields = "_class,dataDate,statisticTime,bounceRate,averageDuration,averageClick,averageAmount,averageRecommendAmount,numberOfUsers";
+					this.doCommandWorkExportByQuery(colName, null, fields);
 				} catch(Exception e) {
 					System.err.println("★Collection Name : " + colName);
 					System.err.println("★Exception : " + e.getMessage());
@@ -149,36 +155,99 @@ public class ExportData1 {
 	}
 	
 	/**
-	 * 匯出Query出的資料
+	 * 匯出Query出的資料，此處來組Query條件
 	 * @throws Exception
 	 */
 	private void doCommandWorkExportByQuery(String collectionName) throws Exception {
-		String collection = collectionName;
-	    String outputlocation = outputFolder + collectionName + ".txt"; //needs to be asigned a random number name
-	    String query = "\"{oriUserID : 'a'}\""; //oriUserID 欄位 Type is String
+		String query = "\"{oriUserID : 'a'}\""; //oriUserID 欄位 Type is String
 	    query = "\"{userID : 1}\""; //userID 欄位 Type is Integer
 	    //query = "'{\"created_at\":{\"$gt\":new Date(2014,09,28)}}'";
 	    query = "'{created_at : {$gt : ISODate(\"2014-03-07T22:00:00Z\")}}'";
 	    
-	    String command = String.format(mongohome + "/bin/mongoexport " +
+	    String fields = "_id,name,note,sDate,eDate";
+	    
+	    this.doCommandWorkExportByQuery(collectionName, query, fields);
+	}
+	
+	/**
+	 * 匯出Query出的資料
+	 * @param collectionName collections name
+	 * @param query 查詢條件
+	 * @param outputField 查詢輸出欄位
+	 * @throws Exception
+	 */
+	private void doCommandWorkExportByQuery(String collectionName, String query, String outputField) throws Exception {
+		String collection = collectionName;
+	    String outputlocation = outputFolder + collectionName + ".txt"; //needs to be asigned a random number name
+	    /*
+	    //Sample Query
+	    String query = "\"{oriUserID : 'a'}\""; //oriUserID 欄位 Type is String
+	    query = "\"{userID : 1}\""; //userID 欄位 Type is Integer
+	    //query = "'{\"created_at\":{\"$gt\":new Date(2014,09,28)}}'";
+	    query = "'{created_at : {$gt : ISODate(\"2014-03-07T22:00:00Z\")}}'";
+	    */
+	    String command = null;
+	    if( (query != null && query.trim().length() > 0) &&
+	    		(outputField != null && outputField.trim().length() > 0) ) {
+	    	//針對輸出的欄位的話， --csv 要打開，否則還是一樣會輸出所有欄位
+	    	command = String.format(mongohome + "/bin/mongoexport " +
 	            "--host %s " +
 	            //"--port %s " +
 	            "--db %s " + 
 	            "--collection %s " + 
-	            //"--query %s " +
+	            "--query %s " +
 	            //"--fields _id,name,note,sDate,eDate " + 
-	            "--fields oriUserID " +
+	            "--fields %s " +
 	            "--out %s " + 
 	            "--slaveOk true " + 
-	            //"--csv " +
+	            "--csv " +
 	            "-vvvvv",
 	            //host,port,db,collection,query,outputlocation);
-	            //host, db_name, collection, query, outputlocation);
-	            host, db_name, collection, outputlocation);
+	            host, db_name, collection, query, outputField, outputlocation);
+	    } else if(query != null && query.trim().length() > 0) {
+	    	command = String.format(mongohome + "/bin/mongoexport " +
+		            "--host %s " +
+		            //"--port %s " +
+		            "--db %s " + 
+		            "--collection %s " + 
+		            "--query %s " +
+		            "--out %s " + 
+		            "--slaveOk true " + 
+		            //"--csv " +
+		            "-vvvvv",
+		            host, db_name, collection, query, outputlocation);
+	    } else if(outputField != null && outputField.trim().length() > 0) {
+	    	//針對輸出的欄位的話， --csv 要打開，否則還是一樣會輸出所有欄位
+	    	command = String.format(mongohome + "/bin/mongoexport " +
+		            "--host %s " +
+		            //"--port %s " +
+		            "--db %s " + 
+		            "--collection %s " + 
+		            //"--fields _id,name,note,sDate,eDate " + 
+		            "--fields %s " +
+		            "--out %s " + 
+		            "--slaveOk true " + 
+		            "--csv " +
+		            "-vvvvv",
+		            //host,port,db,collection,query,outputlocation);
+		            host, db_name, collection, outputField, outputlocation);
+	    } else {
+	    	command = String.format(mongohome + "/bin/mongoexport " +
+		            "--host %s " +
+		            //"--port %s " +
+		            "--db %s " + 
+		            "--collection %s " + 
+		            "--out %s " + 
+		            "--slaveOk true " + 
+		            //"--csv " +
+		            "-vvvvv",
+		            //host,port,db,collection,query,outputlocation);
+		            host, db_name, collection, outputlocation);
+	    }
 	    
 	    //logger.info(command);
 	    System.out.println(command);
-	    try{            
+	    try{
 	            Runtime rt = Runtime.getRuntime();              
 	            Process pr = rt.exec(command);
 	            //StreamGobbler errorGobbler = new StreamGobbler(pr.getErrorStream(),"ERROR",logger);
@@ -226,10 +295,10 @@ public class ExportData1 {
 	            "-vvvvv",
 	            //host,port,db,collection,query,outputlocation);
 	            host,db_name,collection,outputlocation);
-
+	    
 	    //logger.info(command);
 	    System.out.println(command);
-	    try{            
+	    try{
 	            Runtime rt = Runtime.getRuntime();              
 	            Process pr = rt.exec(command);
 	            //StreamGobbler errorGobbler = new StreamGobbler(pr.getErrorStream(),"ERROR",logger);
@@ -261,8 +330,11 @@ public class ExportData1 {
 			//完整名稱
 			tmp = "generalData_T01187263_B_1410759774603";
 			//tmp = "generalData_T01187263_B_1402450563984";
-			tmp = "generalData_T01187263_A_1402450563984";
-			tmp = "MUP_T84305300_B_1503191349478";
+			tmp = "Product_T04222671_A_1411200949414";
+			//tmp = "MUP_T84305300_B_1503191349478";
+			
+			//匯出網站訪問統計報表的資訊(From 住商)
+			tmp = "Statistic_Session_T36948676_A_1409039122078";
 			
 			new ExportData1(tmp);
 		} catch(Exception e) {
