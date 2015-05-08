@@ -3,9 +3,11 @@
  */
 package com.test;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +34,7 @@ public class ReadCsvInsertInto {
 	    //host = "192.168.1.69"; //mongo.dumphost
 	    //host = "192.168.1.107"; //window's mongo.host
 		//host = "localhost"; //window's mongo.host
-		host = "192.168.1.88";
+		host = "192.168.1.123";
 	    //port = null; //mongo.dumpport
 	    db_name = "tptrs"; //mongo.dumpdb
 	}
@@ -40,7 +42,12 @@ public class ReadCsvInsertInto {
 	/**
 	 * 
 	 */
-	public ReadCsvInsertInto(String filePath) {
+	public ReadCsvInsertInto(String filePath, String collectionName) {
+		if(collectionName == null || collectionName.trim().length() == 0) {
+			System.err.println("CollectionName is Empty..");
+			return;
+		}
+		
 		this.initConfig();
 		
 		CSVReader cR = null;
@@ -54,7 +61,7 @@ public class ReadCsvInsertInto {
 			//DB Collections
 			Mongo mongo = new Mongo(host, port);
 			DB db = mongo.getDB(db_name);
-			DBCollection collection = db.getCollection("Statistic_Session_root_A_1505051418490");
+			DBCollection collection = db.getCollection(collectionName);
 			
 			for(int i=0;i<l.size();i++) {
 				String[] str_arr2 = (String[])l.get(i);
@@ -94,10 +101,33 @@ public class ReadCsvInsertInto {
 	}
 	
 	/**
+	 * Read CSV Data and insert into MongoDB
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String filePath = "D:\\9.mongoExportData\\outPutFile.csv";
-		new ReadCsvInsertInto(filePath);
+		//String filePath = "D:\\9.mongoExportData\\outPutFile.csv";
+		
+		BufferedReader readStream;
+		try {
+			readStream = new BufferedReader(new InputStreamReader(System.in));
+			
+			System.out.print("請輸入檔案路徑(資料夾) + 檔名 ： ");
+			String filePath = readStream.readLine();
+			
+			//String filePath = "D:\\9.mongoExportData\\Statistic_Session_T36948676_A_1409039122078.txt";
+			
+			System.out.print("請輸入資料Insert目的端Collections Name ： ");
+			String collectionsName = readStream.readLine();
+			
+			System.out.println("format file path : " + filePath + "\ncollectionsName = " + collectionsName);
+			
+			if(filePath != null && filePath.trim().length() > 0)
+			{
+				new ReadCsvInsertInto(filePath, collectionsName);
+			}
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
