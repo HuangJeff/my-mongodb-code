@@ -3,9 +3,13 @@
  */
 package com.test;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -23,6 +27,10 @@ public class ScanErrorTypeData {
 	private String db_name = null; //mongo.dumpdb
 	
 	private DBCollection dbColObj = null;
+	
+	//更新資料Map
+	//階層--第一層：Key：Collections PK(_id)，第二層：Key：欄位名稱 Value：要Update的值
+	Map<String, Map<String, String>> storeUpdMap = new HashMap<String, Map<String, String>>();
 	
 	private void initConfig() {
 		mongohome = "C:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
@@ -63,42 +71,56 @@ public class ScanErrorTypeData {
 	 * @param field : 要被檢查的欄位
 	 * @param fixFlag : 是否需要被處理
 	 * @param date : 如果要被處理的預設值
-	 * @throws Exception
 	 */
-	public void checkDateType(String field, boolean fixFlag, Date date) throws Exception {
+	public void checkDateType(String field, boolean fixFlag, Date date) {
 		DBCursor cursor = this.dbColObj.find();
 		String colName = cursor.getCollection().getFullName();
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+		String defaultDateStr = null;
+		if(fixFlag) {
+			defaultDateStr = dateFormat.format(date);
+		}
 		
 		int numOfType = 0; //記錄欄位型態錯誤的個數
 		int numOfFieldNotFound = 0; //記錄無此欄位的個數
+		int numOfTotalUpd = 0; //更新筆數
 	    while(cursor.hasNext()) {
 	       DBObject obj = cursor.next();
 	       String rowsKey = obj.get("_id").toString(); //只有 id 一定有
 	       if(obj.containsField(field)) {
 	    	   Object result = obj.get(field);
-	    	   boolean isRightFlag = false; //判斷型別正確與否Flag
+	    	   boolean isRightFlag = true; //判斷型別正確與否Flag
 	    	   //檢查型別
 	    	   //System.out.println(rowsKey + " = " + result);
-	    	   dateFormat.parse(result.toString());
 	    	   
-	    	   System.out.println(rowsKey + " = " + result + " = " + dateFormat.isLenient());
+	    	   try {
+	    		   dateFormat.parse(result.toString());
+	    	   } catch (ParseException e) {
+	    		   isRightFlag = false;
+	    		   System.err.println(e.getMessage());
+	    	   }
 	    	   
-	    	   if(isRightFlag) {
-		    	   //是否修復，若否  只顯示於畫面上
-		    	   if(fixFlag) {
-		    		   
-		    	   } else {
-		    		   //only display
-		    		   if(numOfType < 20) {
-		    			   
-		    		   }
-		    	   }
+	    	   //System.out.println(rowsKey + " = " + result + " isRightFlag = " + isRightFlag);
+	    	   
+	    	   if(!isRightFlag) {
+	    		   //only display
+	    		   if(numOfType < 20) {
+	    			   System.out.println("Error Type " + numOfType + " rows. result is =*" + result + "*");
+	    		   }
 	    		   numOfType++;
+	    		   
+	    		   //是否修復，若否  只顯示於畫面上
+		    	   if(fixFlag) {
+		    		   DBObject jo = new BasicDBObject(field, defaultDateStr);
+		    		   this.dbColObj.update(new BasicDBObject("_id", rowsKey), jo);
+		    		   if(numOfTotalUpd < 20)
+		    			   System.out.println("Fix Date is " + defaultDateStr);
+		    		   numOfTotalUpd++;
+		    	   }
 	    	   }
 	       } else {
-	    	   if(numOfFieldNotFound < 20) {
+	    	   if(numOfFieldNotFound < 10) {
 		    	   String msg = colName + " IN " + rowsKey +
 		    			   " Can't found Field [" + field + "]";
 		    	   System.out.println(msg);
@@ -108,6 +130,7 @@ public class ScanErrorTypeData {
 	    }
 	    System.out.println("Error Type Number is " + numOfType + " rows.");
 	    System.out.println("Total Not Found Number is " + numOfFieldNotFound + " rows.");
+	    System.out.println("Total Update Data Rows is " + numOfTotalUpd + " rows.");
 	}
 	
 	/**
@@ -119,7 +142,7 @@ public class ScanErrorTypeData {
 		try {
 			setd = new ScanErrorTypeData(collections);
 			//檢查日期
-			setd.checkDateType("outDate", false, null);
+			setd.checkDateType("outDate", true, new Date());
 			
 		} catch(Exception e) {
 			e.printStackTrace();
