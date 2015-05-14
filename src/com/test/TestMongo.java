@@ -41,9 +41,9 @@ public class TestMongo {
 		// if it's a member of a replica set:
 		//mongoClient = new MongoClient();
 		// or
-		mongoClient = new MongoClient( "192.168.1.93" );
+		//mongoClient = new MongoClient( "192.168.1.93" );
 		// or
-		//mongoClient = new MongoClient( "localhost" , 27017 );
+		mongoClient = new MongoClient( "localhost" , 27017 );
 		// or, to connect to a replica set, with auto-discovery of the primary, supply a seed list of members
 		//mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost", 27017),
 		//                                      new ServerAddress("localhost", 27018),
