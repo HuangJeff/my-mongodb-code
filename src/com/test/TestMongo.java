@@ -33,6 +33,22 @@ public class TestMongo {
 	MongoClient mongoClient = null;
 	
 	/**
+	 * 
+	 */
+	public TestMongo() throws Exception {
+		this.init();
+		
+		//DBObject crudCondition = this.getActivityCollection("1410061654464");
+		//3.組裝要處理的Collection資訊
+		List<String> listOfCollections = this.getGeneralDataCollection();
+		//將欄位：created_at的日期打亂(要進行日期區間查詢)
+		this.updateFieldCreatedAt();
+		//整理欄位created_at日期的資訊，藉以整理資料的分佈情形
+		this.distinctFieldCreatedAt(listOfCollections);
+		
+	}
+	
+	/**
 	 * 設定資料庫連線
 	 * @throws Exception
 	 */
@@ -48,22 +64,6 @@ public class TestMongo {
 		//mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost", 27017),
 		//                                      new ServerAddress("localhost", 27018),
 		//                                      new ServerAddress("localhost", 27019)));
-		
-	}
-	
-	/**
-	 * 
-	 */
-	public TestMongo() throws Exception {
-		this.init();
-		
-		//DBObject crudCondition = this.getActivityCollection("1410061654464");
-		//3.組裝要處理的Collection資訊
-		List<String> listOfCollections = this.getGeneralDataCollection();
-		//將欄位：created_at的日期打亂(要進行日期區間查詢)
-		this.updateFieldCreatedAt();
-		//整理欄位created_at日期的資訊，藉以整理資料的分佈情形
-		this.distinctFieldCreatedAt(listOfCollections);
 		
 	}
 	

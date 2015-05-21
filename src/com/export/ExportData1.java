@@ -24,19 +24,6 @@ public class ExportData1 {
 	private String port = null; //mongo.dumpport
 	private String db_name = null; //mongo.dumpdb
 	
-	private void initConfig() {
-		mongohome = "C:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
-	    //host = "192.168.1.69"; //mongo.dumphost
-	    //host = "192.168.1.107"; //window's mongo.host
-		//host = "localhost"; //window's mongo.host
-		host = "192.168.1.123";
-	    port = null; //mongo.dumpport
-	    db_name = "tptrs"; //mongo.dumpdb
-	    
-	    outputFolder = "D:/9.mongoExportData/"; //export folder
-	    //outputFolder = "D:/9.mongoExportData_cthouse/"; //export folder
-	}
-	
 	/**
 	 * 
 	 */
@@ -69,6 +56,19 @@ public class ExportData1 {
 					System.err.println("★Exception : " + e.getMessage());
 				}
 		}
+	}
+	
+	private void initConfig() {
+		mongohome = "C:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
+	    //host = "192.168.1.69"; //mongo.dumphost
+	    //host = "192.168.1.107"; //window's mongo.host
+		//host = "localhost"; //window's mongo.host
+		host = "192.168.1.123";
+	    port = null; //mongo.dumpport
+	    db_name = "tptrs"; //mongo.dumpdb
+	    
+	    outputFolder = "D:/9.mongoExportData/"; //export folder
+	    //outputFolder = "D:/9.mongoExportData_cthouse/"; //export folder
 	}
 	
 	/**

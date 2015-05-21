@@ -38,16 +38,6 @@ public class ScanErrorTypeData {
 	//階層--第一層：Key：Collections PK(_id)，第二層：Key：欄位名稱 Value：要Update的值
 	Map<String, Map<String, String>> storeUpdMap = new HashMap<String, Map<String, String>>();
 	
-	private void initConfig() {
-		mongohome = "C:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
-	    //host = "192.168.1.69"; //mongo.dumphost
-	    //host = "192.168.1.107"; //window's mongo.host
-		//host = "localhost"; //window's mongo.host
-		host = "192.168.1.123";
-	    port = 27017; //mongo.dumpport
-	    db_name = "tptrs"; //mongo.dumpdb
-	}
-	
 	/**
 	 * 建構子
 	 * @param colName : Collection Name
@@ -58,6 +48,16 @@ public class ScanErrorTypeData {
 		this.initConfig();
 		
 		this.getSpecifyCollection(colName, isEndFlag);
+	}
+	
+	private void initConfig() {
+		mongohome = "C:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
+	    //host = "192.168.1.69"; //mongo.dumphost
+	    //host = "192.168.1.107"; //window's mongo.host
+		//host = "localhost"; //window's mongo.host
+		host = "192.168.1.123";
+	    port = 27017; //mongo.dumpport
+	    db_name = "tptrs"; //mongo.dumpdb
 	}
 	
 	/**

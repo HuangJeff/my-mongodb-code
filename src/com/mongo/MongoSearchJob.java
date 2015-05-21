@@ -23,6 +23,14 @@ public class MongoSearchJob {
 	private String port = null; //mongo.dumpport
 	private String db_name = null; //mongo.dumpdb
 	
+	/**
+	 * 
+	 */
+	public MongoSearchJob(String activityName) throws Exception {
+		this.initConfig();
+		
+	}
+	
 	private void initConfig() {
 		mongohome = "C:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
 	    //host = "192.168.1.69"; //mongo.dumphost
@@ -32,14 +40,6 @@ public class MongoSearchJob {
 	    port = null; //mongo.dumpport
 	    db_name = "tptrs"; //mongo.dumpdb
 	    
-	}
-	
-	/**
-	 * 
-	 */
-	public MongoSearchJob(String activityName) throws Exception {
-		this.initConfig();
-		
 	}
 	
 	/**
