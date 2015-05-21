@@ -48,9 +48,9 @@ public class InsertDocument {
 	
 	private void initConfig() {
 		mongohome = "C:/trs-standalone/mongodb-win32-x86_64-2.2.2"; //mongo.home
-	    //host = "192.168.1.69"; //mongo.dumphost
+	    host = "192.168.1.25"; //mongo.dumphost
 	    //host = "192.168.1.107"; //window's mongo.host
-		host = "localhost"; //window's mongo.host
+		//host = "localhost"; //window's mongo.host
 		//host = "192.168.1.123";
 	    //port = 27017; //mongo.dumpport
 	    db_name = "MyTest"; //mongo.dumpdb
