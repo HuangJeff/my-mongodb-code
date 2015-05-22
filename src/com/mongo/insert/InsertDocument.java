@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.test;
+package com.mongo.insert;
 
 import java.net.UnknownHostException;
 import java.util.Date;
