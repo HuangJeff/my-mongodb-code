@@ -4,10 +4,13 @@
 package com.mongo.insert;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DB;
@@ -99,8 +102,17 @@ public class InsertDocument {
 		
 		document.put("detail", documentDetail);
 		
+		BasicDBList list = new BasicDBList();
+		list.add(new Double(1.3335));
+		list.add("A");
+		list.add(new Date());
+		
+		document.put("list", list);
+		
 		document.put("status", false);
 		document.put("created", new Date());
+		
+		document.put("info", "insert by BasicDBObject");
 		
 		collection.insert(document);
 		
@@ -124,6 +136,15 @@ public class InsertDocument {
 				.add("status", true)
 				.add("created", new Date());
 		
+		BasicDBList list = new BasicDBList();
+		list.add(new Double(1.3335));
+		list.add("A");
+		list.add(new Date());
+		
+		documentBuilder.add("list", list);
+		
+		documentBuilder.add("info", "insert by BasicDBObjectBuilder");
+		
 		collection.insert(documentBuilder.get());
 	}
 	
@@ -144,8 +165,17 @@ public class InsertDocument {
 		
 		documentMap.put("detail", documentMapDetail);
 		
+		List<Object> list = new ArrayList<Object>();
+		list.add(new Double(1.3335));
+		list.add("A");
+		list.add(new Date());
+		
+		documentMap.put("list", list);
+		
 		documentMap.put("status", false);
 		documentMap.put("created", new Date());
+		
+		documentMap.put("info", "insert by Map");
 		
 		collection.insert(new BasicDBObject(documentMap));
 	}
@@ -154,8 +184,12 @@ public class InsertDocument {
 	 * 4. JSON parse example
 	 */
 	public void insertByJson() {
-		String json = "{'database' : 'mkyongDB','table' : 'hosting'," +
-				  "'detail' : {'records' : 99, 'index' : 'vps_index1', 'active' : 'true'}}}";
+		String json = "{"
+				+ "'database' : 'mkyongDB', 'table' : 'hosting',"
+				+ "'detail' : {'records' : 99, 'index' : 'vps_index1', 'active' : 'true'},"
+				//+ "'list' : [{33, 'ABC'}],"
+				+ "'info' : 'insert by Json'"
+				+ "}";
 		
 		DBObject dbObject = (DBObject)JSON.parse(json);
 		
