@@ -33,11 +33,11 @@ public class GridFSTest {
 	static DB db = null;
 	static DBCollection collection = null;
 	static GridFS gridfs = null;
-	static String filename = "001招攬訪問報告書暨生調表!@!00001510301.tif";
-	static String collectionName = "pocfiles_meta";
-	static String gridfsName = "pocfiles";
-	static String filepath = "E:/" + filename;
-	static File file = new File(filepath);
+	//static String filename = "001招攬訪問報告書暨生調表!@!00001510301.tif";	//要寫入的檔案名稱
+	static String collectionName = "pocfiles_meta";	//mongodb meta collection name
+	static String gridfsName = "pocfiles";	//gridfs collection name
+	//static String filepath = "E:/" + filename;	//檔名路徑(範例是在E:/)
+	//static File file = new File(filepath);
 	
 	/**
 	 * 
@@ -45,7 +45,7 @@ public class GridFSTest {
 	public GridFSTest() {
 	}
 	
-	public static void fileCheck(ByteArrayOutputStream fis1) throws Exception{
+	public static void fileCheck(ByteArrayOutputStream fis1, File file) throws Exception{
 		
 		InputStream fis2 = new FileInputStream(file);
 		
@@ -70,7 +70,7 @@ public class GridFSTest {
 	}
 	
 	//查詢檔案
-	public static ByteArrayOutputStream getData() throws Exception{
+	public static ByteArrayOutputStream getData(String filename) throws Exception{
 		// This query fetches the files I need
 		GridFSDBFile gridFSDBFile = gridfs.findOne(new BasicDBObject("filename",filename));
 		
@@ -88,7 +88,7 @@ public class GridFSTest {
     }
 	
 	//移除檔案
-	public static void deleteData() throws Exception{
+	public static void deleteData(String filename) throws Exception{
 		gridfs.remove(gridfs.findOne(filename));
 		
 		BasicDBObject info = new BasicDBObject();
@@ -102,14 +102,14 @@ public class GridFSTest {
 	}
 	
 	//把檔案寫入到GridFS
-	public static void insertData() throws Exception{
+	public static void insertData(String filepath, File file) throws Exception{
  
 		//
 		// Store the file to MongoDB using GRIDFS
 		//
 		
 		GridFSInputFile gfsFile = gridfs.createFile(file);
-		gfsFile.setFilename(filename);
+		gfsFile.setFilename(file.getName());
 		gfsFile.save();
  
 		//
@@ -117,7 +117,7 @@ public class GridFSTest {
 		//
 		BasicDBObject info = new BasicDBObject();
                 info.put("version", "1.0");
-                info.put("filename", filename);
+                info.put("filename", file.getName());
                 info.put("filepath", filepath);
  
         //
@@ -133,26 +133,71 @@ public class GridFSTest {
 	 */
 	public static void main(String[] args) {
 		try {
-			mongo = new Mongo("localhost", 27017);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
-		db = mongo.getDB("test");
-		collection = db.getCollection(collectionName);
-		gridfs = new GridFS(db, gridfsName);
-		
-		try {
-			//1.新增檔案
-			insertData();
+			//取得參數
+			if(args.length != 4) {
+				throw new Exception("參數個數須為4個[FilePath forLoopNumber DBURL compareFlag]！");
+			}
+			long s1 = System.currentTimeMillis();
 			
-			//2.查詢資料
-			ByteArrayOutputStream out = getData();
+			String filePath = args[0];
+			int forLoops = Integer.parseInt(args[1]);
+			String url = args[2];
+			boolean compareFlag = Boolean.parseBoolean(args[3]);
 			
-			//3.比對檔案
-			fileCheck(out);
+			System.out.println("filePath is " + filePath + "  forLoops is " + forLoops);
+			System.out.println("DB URL is " + url);
+			try {
+				//mongo = new Mongo("192.168.1.103", 27027);
+				mongo = new Mongo(url);
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+				throw e;
+			}
+			db = mongo.getDB("gridFSTest");
+			collection = db.getCollection(collectionName);
+			gridfs = new GridFS(db, gridfsName);
 			
-			//4.刪除DB測試資料
-			deleteData();
+			long s2 = System.currentTimeMillis();
+			System.out.println("Connect DB [" + (s2 - s1) + " ms.]");
+			
+			long totalRows = 0;
+			long successRows = 0;
+			long failRows = 0;
+			File _file = new File(filePath);
+			//System.out.println("_file is " + _file.isDirectory());
+			File[] aryOfFile = _file.listFiles();
+			
+			for(int i = 0;i < forLoops; i++) {
+				for(File f : aryOfFile) {
+					totalRows++;
+					String filepath = f.getPath();
+					String filename = f.getName();
+					//System.out.println(i + " = " + filename + " " + filepath);
+					try {
+						//1.新增檔案
+						insertData(filepath, f);
+						
+						if(compareFlag) {
+							//2.查詢資料
+							ByteArrayOutputStream out = getData(filename);
+							
+							//3.比對檔案
+							fileCheck(out, f);
+						}
+						//4.刪除DB測試資料
+						//deleteData(filename);
+						
+						successRows++;
+					} catch(Exception e) {
+						System.err.println(e.getMessage());
+						failRows++;
+					}
+				}
+			}
+			
+			long s3 = System.currentTimeMillis();
+			System.out.println("Total[" + totalRows + "]rows。Success[" + successRows + "]rows。"
+					+ "Fails[" + failRows + "]rows。Time is [" + (s3 - s1) + " ms.]");
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
