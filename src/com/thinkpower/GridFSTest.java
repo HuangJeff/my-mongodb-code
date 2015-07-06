@@ -76,8 +76,8 @@ public class GridFSTest {
 		
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		gridFSDBFile.writeTo(out);
-		System.out.println("2.取得DB檔案，filename=" + gridFSDBFile.getFilename());
-		System.out.println("");
+		//System.out.println("2.取得DB檔案，filename=" + gridFSDBFile.getFilename());
+		//System.out.println("");
 		return out;
 	}
 	
@@ -124,8 +124,8 @@ public class GridFSTest {
         // Let's store our document to MongoDB
         //
 		collection.insert(info, WriteConcern.SAFE);
-		System.out.println("1.資料寫入成功!");
-		System.out.println("");
+		//System.out.println("1.資料寫入成功!");
+		//System.out.println("");
 	}
 	
 	/**
@@ -177,15 +177,20 @@ public class GridFSTest {
 						//1.新增檔案
 						insertData(filepath, f);
 						
+						//2.查詢資料
+						ByteArrayOutputStream out = getData(filename);
+						
 						if(compareFlag) {
-							//2.查詢資料
-							ByteArrayOutputStream out = getData(filename);
-							
 							//3.比對檔案
 							fileCheck(out, f);
 						}
 						//4.刪除DB測試資料
 						//deleteData(filename);
+						
+
+						if(i == (forLoops / 2))
+							System.out.println("Run " + i + " rows.Time is [" +
+									(System.currentTimeMillis() - s1) + " ms.]");
 						
 						successRows++;
 					} catch(Exception e) {
