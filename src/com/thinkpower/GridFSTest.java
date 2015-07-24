@@ -187,17 +187,15 @@ public class GridFSTest {
 						//4.刪除DB測試資料
 						//deleteData(filename);
 						
-
-						if(i == (forLoops / 2))
-							System.out.println("Run " + i + " rows.Time is [" +
-									(System.currentTimeMillis() - s1) + " ms.]");
-						
 						successRows++;
 					} catch(Exception e) {
 						System.err.println(e.getMessage());
 						failRows++;
 					}
 				}
+				if(i == (forLoops / 2))
+					System.out.println("Run " + i + " rows.Time is [" +
+							(System.currentTimeMillis() - s1) + " ms.]");
 			}
 			
 			long s3 = System.currentTimeMillis();
