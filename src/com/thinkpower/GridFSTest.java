@@ -10,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -38,6 +40,8 @@ public class GridFSTest {
 	static String gridfsName = "pocfiles";	//gridfs collection name
 	//static String filepath = "E:/" + filename;	//檔名路徑(範例是在E:/)
 	//static File file = new File(filepath);
+	
+	static Map<String, Object> dbKeyMap = new HashMap<String, Object>();
 	
 	/**
 	 * 
@@ -102,13 +106,14 @@ public class GridFSTest {
 	}
 	
 	//把檔案寫入到GridFS
-	public static void insertData(String filepath, File file) throws Exception{
+	public static void insertData(String filepath, File file, String dbKeyValue) throws Exception{
  
 		//
 		// Store the file to MongoDB using GRIDFS
 		//
 		
 		GridFSInputFile gfsFile = gridfs.createFile(file);
+		gfsFile.setId(dbKeyValue);
 		gfsFile.setFilename(file.getName());
 		gfsFile.save();
  
@@ -116,9 +121,10 @@ public class GridFSTest {
 		// Let's create a new JSON document with some "metadata" information on the download
 		//
 		BasicDBObject info = new BasicDBObject();
-                info.put("version", "1.0");
-                info.put("filename", file.getName());
-                info.put("filepath", filepath);
+		info.put("_id", dbKeyValue);
+        info.put("version", "1.0");
+        info.put("filename", file.getName());
+        info.put("filepath", filepath);
  
         //
         // Let's store our document to MongoDB
@@ -126,6 +132,22 @@ public class GridFSTest {
 		collection.insert(info, WriteConcern.SAFE);
 		//System.out.println("1.資料寫入成功!");
 		//System.out.println("");
+	}
+	
+	//取得唯一Key值
+	private static String getUniqueKeyValue() {
+		String rtnKeyValue = null;
+		while(true) {
+			rtnKeyValue = "" + System.nanoTime();
+			//System.out.println("kv = " + rtnKeyValue);
+			rtnKeyValue = rtnKeyValue.substring(rtnKeyValue.length() - 5, rtnKeyValue.length());
+			//System.out.println("kv = " + rtnKeyValue);
+			if(!dbKeyMap.containsKey(rtnKeyValue)) {
+				dbKeyMap.put(rtnKeyValue, null);
+				break;
+			}
+		}
+		return rtnKeyValue;
 	}
 	
 	/**
@@ -173,16 +195,21 @@ public class GridFSTest {
 					String filepath = f.getPath();
 					String filename = f.getName();
 					//System.out.println(i + " = " + filename + " " + filepath);
+					//first insert
+					//String dbKeyValue = "MIC_" + getUniqueKeyValue() + filename.substring(0, 3);
+					//second insert
+					String dbKeyValue = "CIM_" + getUniqueKeyValue() + filename.substring(0, 3);
+					System.out.println("dbKeyValue = " + dbKeyValue);
 					try {
 						//1.新增檔案
-						insertData(filepath, f);
+						insertData(filepath, f, dbKeyValue);
 						
 						//2.查詢資料
-						ByteArrayOutputStream out = getData(filename);
+						//ByteArrayOutputStream out = getData(filename);
 						
 						if(compareFlag) {
 							//3.比對檔案
-							fileCheck(out, f);
+							//fileCheck(out, f);
 						}
 						//4.刪除DB測試資料
 						//deleteData(filename);
