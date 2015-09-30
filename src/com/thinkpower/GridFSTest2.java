@@ -21,7 +21,8 @@ import com.mongodb.gridfs.GridFSInputFile;
 
 /**
  * 測試 MongoDB GridFS<br>
- * step 2 : Read --> insert again
+ * step 2 : Read --> insert again<br>
+ * 讀取檔後重新在塞回DB
  * @author asus1
  *
  */

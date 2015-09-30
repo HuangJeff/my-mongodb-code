@@ -23,7 +23,8 @@ import com.mongodb.gridfs.GridFSDBFile;
 import com.mongodb.gridfs.GridFSInputFile;
 
 /**
- * 測試 MongoDB GridFS
+ * 測試 MongoDB GridFS<br>
+ * 原始程式-小麥製作
  * @author jeff
  */
 public class GridFSTest {
@@ -35,6 +36,8 @@ public class GridFSTest {
 	static DB db = null;
 	static DBCollection collection = null;
 	static GridFS gridfs = null;
+	
+	static String dbName = "gridFSTest";
 	//static String filename = "001招攬訪問報告書暨生調表!@!00001510301.tif";	//要寫入的檔案名稱
 	static String collectionName = "pocfiles_meta";	//mongodb meta collection name
 	static String gridfsName = "pocfiles";	//gridfs collection name
@@ -106,7 +109,7 @@ public class GridFSTest {
 	}
 	
 	//把檔案寫入到GridFS
-	public static void insertData(String filepath, File file, String dbKeyValue) throws Exception{
+	public static void insertData(String filepath, File file, int dbKeyValue) throws Exception{
  
 		//
 		// Store the file to MongoDB using GRIDFS
@@ -175,14 +178,14 @@ public class GridFSTest {
 				e.printStackTrace();
 				throw e;
 			}
-			db = mongo.getDB("gridFSTest");
+			db = mongo.getDB(dbName);
 			collection = db.getCollection(collectionName);
 			gridfs = new GridFS(db, gridfsName);
 			
 			long s2 = System.currentTimeMillis();
 			System.out.println("Connect DB [" + (s2 - s1) + " ms.]");
 			
-			long totalRows = 0;
+			int totalRows = 0;
 			long successRows = 0;
 			long failRows = 0;
 			File _file = new File(filePath);
@@ -198,7 +201,9 @@ public class GridFSTest {
 					//first insert
 					//String dbKeyValue = "MIC_" + getUniqueKeyValue() + filename.substring(0, 3);
 					//second insert
-					String dbKeyValue = "CIM_" + getUniqueKeyValue() + filename.substring(0, 3);
+					//String dbKeyValue = "CIM_" + getUniqueKeyValue() + filename.substring(0, 3);
+					//指定db key value(搭配Shard Key Range的設定)
+					int dbKeyValue = totalRows;
 					System.out.println("dbKeyValue = " + dbKeyValue);
 					try {
 						//1.新增檔案
