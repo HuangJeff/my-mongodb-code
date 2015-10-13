@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.thinkpower;
+package com.thinkpower.cathayholdings;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
