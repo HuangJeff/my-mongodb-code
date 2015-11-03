@@ -53,10 +53,18 @@ public class InsertData {
 			throw e;
 		}
 		//一般DB
+		db = mongo.getDB("admin");
+		//v2.10 api Authenticates to db
+		boolean isAuth = db.authenticate("manager", "1qaz2wsx".toCharArray());
+		System.out.println("一般DB Authenticates to [admin] is OK?? " + isAuth);
 		db = mongo.getDB(dbName);
 		collection = db.getCollection(collectionName);
 		
 		//gridFS
+		gridfsDb = mongo.getDB("admin");
+		//v2.10 api Authenticates to db
+		boolean isAuthGridFS = gridfsDb.authenticate("manager", "1qaz2wsx".toCharArray());
+		System.out.println("gridFS DB Authenticates to [admin] is OK?? " + isAuthGridFS);
 		gridfsDb = mongo.getDB(gridfsDbName);
 		gridfs = new GridFS(gridfsDb, gridfsName);
 		
@@ -72,12 +80,14 @@ public class InsertData {
 		try {
 			for(int i=0;i<forLoops;i++) {
 				BasicDBObject info = new BasicDBObject();
-				info.put("_id", getIDKey("GN"));
+				//info.put("_id", getIDKey("GN"));
 		        info.put("version", "1.0");
 		        info.put("filename", getRandomString());
 		        info.put("filepath", getRandomString());
 		        
 				collection.insert(info, WriteConcern.SAFE);
+				if((i % 20000) == 0)
+					System.out.println("Rows = " + i);
 			}
 			long s2 = System.currentTimeMillis();
 			System.out.println("insertGeneralData Time is [" + (s2 - s1) + " ms.]");
@@ -149,6 +159,24 @@ public class InsertData {
 		return returnStr;
 	}
 	
+	/**
+	 * Insert 一般資料 透過多執行序方式
+	 * @param forLoops 迴圈數
+	 */
+	public void insertByMutiThread(final int forLoops) {
+		int threadSize = 5;
+		for(int i=0;i<threadSize;i++) {
+			String t_name = "t_" + i;
+			Thread t = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					insertGeneralData(forLoops);
+				}
+			}, t_name);
+			System.out.println("Thread Name = " + t.getName());
+			t.start();
+		}
+	}
 	
 	/**
 	 * @param args
@@ -161,9 +189,12 @@ public class InsertData {
 			
 			InsertData indata = new InsertData(url);
 			//一般
-			indata.insertGeneralData(forLoops);
+			//indata.insertGeneralData(forLoops);
 			//gridFS
-			indata.insertGridFSData(forLoops, filePath);
+			//indata.insertGridFSData(forLoops, filePath);
+			
+			//一般ByThread
+			indata.insertByMutiThread(forLoops);
 		} catch(Exception e) {
 			e.printStackTrace(System.err);
 		}
