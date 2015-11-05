@@ -164,7 +164,7 @@ public class InsertData {
 	 * @param forLoops 迴圈數
 	 */
 	public void insertByMutiThread(final int forLoops) {
-		int threadSize = 5;
+		int threadSize = 50;
 		for(int i=0;i<threadSize;i++) {
 			String t_name = "t_" + i;
 			Thread t = new Thread(new Runnable() {
