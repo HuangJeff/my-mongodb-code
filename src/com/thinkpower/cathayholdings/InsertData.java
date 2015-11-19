@@ -24,6 +24,7 @@ import com.mongodb.gridfs.GridFSInputFile;
  */
 public class InsertData {
 	private Mongo mongo = null;
+	/*
 	//一般Collection
 	private DB db = null;
 	private String dbName = "fsDB";
@@ -35,16 +36,24 @@ public class InsertData {
 	private String gridfsDbName = "gridFSTest";
 	private GridFS gridfs = null;
 	private String gridfsName = "pocfiles";	//gridfs collection name
+	*/
+	//DB List
+	private List<DB> listOfDB = new ArrayList<DB>();
+	
+	private String collectionName = "pocfiles_meta";	//mongodb meta collection name
+	private String gridfsName = "pocfiles";	//gridfs collection name
 	
 	
 	private List<String> storeKeyList = new ArrayList<String>();
 	
 	/**
 	 * @param dbUrl : 192.168.1.103:27017
+	 * @param dbNameList : DB List
 	 */
-	public InsertData(String dbUrl) throws Exception {
+	public InsertData(String dbUrl, String dbNameList) throws Exception {
 		long s1 = System.currentTimeMillis();
 		System.out.println("DB URL is " + dbUrl);
+		
 		try {
 			//mongo = new Mongo("192.168.1.103", 27027);
 			mongo = new Mongo(dbUrl);
@@ -52,6 +61,7 @@ public class InsertData {
 			e.printStackTrace();
 			throw e;
 		}
+		/*
 		//一般DB
 		db = mongo.getDB("admin");
 		//v2.10 api Authenticates to db
@@ -67,15 +77,28 @@ public class InsertData {
 		System.out.println("gridFS DB Authenticates to [admin] is OK?? " + isAuthGridFS);
 		gridfsDb = mongo.getDB(gridfsDbName);
 		gridfs = new GridFS(gridfsDb, gridfsName);
+		*/
+		String[] aryOfDbName = dbNameList.split(",");
+		
+		for(String dbName : aryOfDbName) {
+			DB db = mongo.getDB("admin");
+			//v2.10 api Authenticates to db
+			boolean isAuth = db.authenticate("manager", "1qaz2wsx".toCharArray());
+			System.out.println("DB ["+ dbName + "] Authenticates to [admin] is OK?? " + isAuth);
+			
+			db = mongo.getDB(dbName);
+			
+			listOfDB.add(db);
+		}
 		
 		long s3 = System.currentTimeMillis();
-		System.out.println("Time is [" + (s3 - s1) + " ms.]");
+		System.out.println("Constructor Create DB Time is [" + (s3 - s1) + " ms.]");
 	}
 	
 	/**
 	 * 文字型資料
 	 */
-	public void insertGeneralData(int forLoops) {
+	/*public void insertGeneralData(int forLoops) {
 		long s1 = System.currentTimeMillis();
 		try {
 			for(int i=0;i<forLoops;i++) {
@@ -94,12 +117,12 @@ public class InsertData {
 		} catch(Exception e) {
 			e.printStackTrace(System.err);
 		}
-	}
+	}*/
 	
 	/**
 	 * GridFS資料
 	 */
-	public void insertGridFSData(int forLoops, String filePath) {
+	/*public void insertGridFSData(int forLoops, String filePath) {
 		long s1 = System.currentTimeMillis();
 		try {
 			File _file = new File(filePath);
@@ -121,6 +144,60 @@ public class InsertData {
 		} catch(Exception e) {
 			e.printStackTrace(System.err);
 		}
+	}*/
+	
+	/**
+	 * 整合 insert into "文字檔"與"圖檔" Collections 的行為
+	 * @param forLoops
+	 * @param hasImgFlag
+	 * @param filePath
+	 */
+	public void insertData(DB focusDB, int forLoops, boolean hasImgFlag, String filePath) {
+		long s1 = System.currentTimeMillis();
+		try {
+			DBCollection collection = focusDB.getCollection(collectionName);
+			String _dbName = focusDB.getName();
+			
+			File[] aryOfFile = null;
+			GridFS gridfs = null;
+			if(hasImgFlag) {
+				gridfs = new GridFS(focusDB, gridfsName);
+				
+				File _file = new File(filePath);
+				//System.out.println("_file is " + _file.isDirectory());
+				aryOfFile = _file.listFiles();
+			}
+			
+			for(int i=0;i<forLoops;i++) {
+				BasicDBObject info = new BasicDBObject();
+				//info.put("_id", getIDKey("GN"));
+		        info.put("version", "1.0");
+		        info.put("filename", getRandomString());
+		        info.put("filepath", getRandomString());
+		        
+				collection.insert(info, WriteConcern.SAFE);
+				
+				if(hasImgFlag) {
+					for(File file : aryOfFile) {
+						//
+						// Store the file to MongoDB using GRIDFS
+						//
+						GridFSInputFile gfsFile = gridfs.createFile(file);
+						gfsFile.setId(getIDKey(getRandomString()));
+						gfsFile.setFilename(file.getName());
+						gfsFile.save();
+					}
+				}
+				
+				if((i % 20000) == 0)
+					System.out.println("DB : " + _dbName + " DataRows : " + i);
+			}
+			
+			long s2 = System.currentTimeMillis();
+			System.out.println("insertData Time is [" + (s2 - s1) + " ms.]");
+		} catch(Exception e) {
+			e.printStackTrace(System.err);
+		}
 	}
 	
 	/**
@@ -133,8 +210,8 @@ public class InsertData {
 		boolean runFlag = true;
 		while(runFlag) {
 			double randomNum = Math.random();
-			int ans = (int)(10000 * randomNum);
-			System.out.println("randomNum = " + randomNum + " ans = " + ans);
+			int ans = (int)(10000000 * randomNum);
+			//System.out.println("randomNum = " + randomNum + " ans = " + ans);
 			String key = str + "_" + ans;
 			if(!storeKeyList.contains(key)) {
 				rtnValue = ans;
@@ -160,41 +237,106 @@ public class InsertData {
 	}
 	
 	/**
-	 * Insert 一般資料 透過多執行序方式
+	 * Insert 一般資料 透過多執行序方式<br>
+	 * 設計：一台DB-->有50條Thread在執行<br>
+	 * @param threadSize Thread數
 	 * @param forLoops 迴圈數
+	 * @param hasGridFSFlag 有無GridFS
+	 * @param imgPath GridFS 圖檔路徑
 	 */
-	public void insertByMutiThread(final int forLoops) {
-		int threadSize = 50;
-		for(int i=0;i<threadSize;i++) {
-			String t_name = "t_" + i;
-			Thread t = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					insertGeneralData(forLoops);
-				}
-			}, t_name);
-			System.out.println("Thread Name = " + t.getName());
-			t.start();
+	public void insertByMutiThread(final int threadSize, final int forLoops,
+			final boolean hasGridFSFlag, final String imgPath) {
+		for(final DB db : listOfDB) {
+			//int threadSize = 50;
+			for(int i=0;i<threadSize;i++) {
+				String t_name = db.getName() + "_thread_" + i;
+				Thread t = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						//insertGeneralData(forLoops);
+						//if(hasGridFSFlag)
+						//	insertGridFSData(forLoops, imgPath);
+						
+						insertData(db, forLoops, hasGridFSFlag, imgPath);
+					}
+				}, t_name);
+				System.out.println("Thread Name = " + t.getName());
+				t.start();
+			}
 		}
 	}
 	
 	/**
-	 * @param args
+	 * 參數(共五組)：<br>
+	 * DBUrl : 一條DB URL<br>
+	 * DBName : List Of DB Name(以逗號分隔)<br>
+	 * imgFilePath : 若為空，表示只塞"文字檔"(不處理gridFS)<br>
+	 * dataRows : 資料筆數 <br>
+	 * numberOfThreads : 壓測力量大小(Thread數目)
+	 * @param args : [DBUrl DBName imgFilePath dataRows numberOfThreads]
 	 */
 	public static void main(String[] args) {
 		try {
-			String url = args[0];
-			int forLoops = Integer.parseInt(args[1]);
-			String filePath = args[2];	//Data/thinkpower
+			System.out.println("*** ****** ***");
+			System.out.println("*** 完整傳入參數個數:[DBUrl DBName imgFilePath dataRows numberOfThreads]");
+			System.out.println("*** DBUrl : 一條DB URL (必填)***");
+			System.out.println("*** DBName : List Of DB Name(以逗號分隔)(若為空，塞NULL字串)");
+			System.out.println("*** imgFilePath : 若為空，表示只塞<文字檔>(不處理gridFS)(若為空，塞NULL字串)");
+			System.out.println("*** dataRows : 資料筆數(若為空，塞NULL字串)");
+			System.out.println("*** numberOfThreads : 壓測力量大小(Thread數目)(若為空，塞NULL字串)");
+			System.out.println("*** ****** ***\n");
 			
-			InsertData indata = new InsertData(url);
+			String url = args[0];
+			String dbList = null;
+			String filePath = null;	//Data/thinkpower
+			int dataRows = 1;
+			int numOfThreads = 1;
+			
+			try {
+				dbList = args[1];
+				if("NULL".equalsIgnoreCase(dbList))
+					dbList = null;
+			} catch(Exception e) {}
+			
+			try {
+				filePath = args[2];	//Data/thinkpower
+				if("NULL".equalsIgnoreCase(filePath))
+					filePath = null;
+			} catch(Exception e) {}
+			
+			try {
+				dataRows = Integer.parseInt(args[3]);
+			} catch(Exception e) {}
+			try {
+				numOfThreads = Integer.parseInt(args[4]);
+			} catch(Exception e) {}
+			
+			System.out.println("Args url = " + url);
+			System.out.println("Args dbList = " + dbList);
+			System.out.println("Args filePath = " + filePath);
+			System.out.println("Args dataRows = " + dataRows);
+			System.out.println("Args Threads = " + numOfThreads);
+			
+			//只有dbUrl是必需要有的，其它若無，採預設值
+			if("NULL".equalsIgnoreCase(url) ||
+					url == null || url.trim().length() == 0)
+				throw new Exception("DB URL is Empty.");
+			
+			if(dbList == null || dbList.trim().length() == 0)
+				dbList = "noDB";
+			
+			boolean imgFlag = false; //預設「沒有圖檔」
+			if(filePath != null && filePath.trim().length() > 0)
+				imgFlag = true; //有圖檔
+			
+			InsertData indata = new InsertData(url, dbList);
 			//一般
 			//indata.insertGeneralData(forLoops);
 			//gridFS
 			//indata.insertGridFSData(forLoops, filePath);
 			
 			//一般ByThread
-			indata.insertByMutiThread(forLoops);
+			indata.insertByMutiThread(numOfThreads, dataRows, imgFlag, filePath);
 		} catch(Exception e) {
 			e.printStackTrace(System.err);
 		}
