@@ -276,14 +276,15 @@ public class InsertData {
 	 * @param args : [DBUrl DBName imgFilePath dataRows numberOfThreads]
 	 */
 	public static void main(String[] args) {
+		InsertData indata = null;
 		try {
 			System.out.println("*** ****** ***");
 			System.out.println("*** 完整傳入參數個數:[DBUrl DBName imgFilePath dataRows numberOfThreads]");
-			System.out.println("*** DBUrl : 一條DB URL (必填)***");
-			System.out.println("*** DBName : List Of DB Name(以逗號分隔)(若為空，塞NULL字串)");
-			System.out.println("*** imgFilePath : 若為空，表示只塞<文字檔>(不處理gridFS)(若為空，塞NULL字串)");
-			System.out.println("*** dataRows : 資料筆數(若為空，塞NULL字串)");
-			System.out.println("*** numberOfThreads : 壓測力量大小(Thread數目)(若為空，塞NULL字串)");
+			System.out.println("*** DBUrl :\t\t一條DB URL (必填)***");
+			System.out.println("*** DBName :\t\tList Of DB Name(以逗號分隔)(default:NULL字串)");
+			System.out.println("*** imgFilePath :\tImage檔案資料夾路徑(default:NULL字串(只塞<文字檔>))");
+			System.out.println("*** dataRows :\t\t資料筆數(default:NULL字串)");
+			System.out.println("*** numberOfThreads :\t壓測力量大小(Thread數目)(default:NULL字串)");
 			System.out.println("*** ****** ***\n");
 			
 			String url = args[0];
@@ -329,7 +330,7 @@ public class InsertData {
 			if(filePath != null && filePath.trim().length() > 0)
 				imgFlag = true; //有圖檔
 			
-			InsertData indata = new InsertData(url, dbList);
+			indata = new InsertData(url, dbList);
 			//一般
 			//indata.insertGeneralData(forLoops);
 			//gridFS
