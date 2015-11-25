@@ -17,13 +17,7 @@ import com.mongodb.*;
  * @author Jeff
  */
 public class ConnectArbiterTest {
-	
-	/**
-	 * 
-	 */
-	public ConnectArbiterTest() {
-		
-	}
+	public ConnectArbiterTest() {}
 	
 	/**
 	 * 1.測試：com.mongodb.MongoServerSelectionException <br>
@@ -32,14 +26,14 @@ public class ConnectArbiterTest {
 	public static void main(String[] args) {
 		MongoClient mongoClient = null;
 		try {
-			String hosts = "192.168.1.127"; //"WinDB:27053";
-			int port = 27053;
-			//MongoCredential mongoAuthInfo =
-			//		MongoCredential.createMongoCRCredential(
-			//				"manager", "admin", "1qaz2wsx".toCharArray());
+			String hosts = "192.168.1.112"; //"WinDB:27053";
+			int port = 27051;
+			MongoCredential mongoAuthInfo =
+					MongoCredential.createMongoCRCredential(
+							"manager", "admin", "1qaz2wsx".toCharArray());
 			
 			mongoClient = new MongoClient(new ServerAddress( hosts, port )
-							//, Arrays.asList(mongoAuthInfo)
+							, Arrays.asList(mongoAuthInfo)
 							);
 			
 			//by host
@@ -59,9 +53,9 @@ public class ConnectArbiterTest {
 			System.out.println("isSlaveOk = " + mongoClient.getReadPreference().isSlaveOk());
 			
 			try {
-				DB mydb = mongoClient.getDB("test");
-				CommandResult cmm = mydb.command( "serverStatus" );
-				System.out.println("Command [serverStatus] = " + cmm );
+				DB mydb = mongoClient.getDB("admin");
+				//CommandResult cmm = mydb.command( "serverStatus" );
+				//System.out.println("Command [serverStatus] = " + cmm );
 				
 				CommandResult cmm2 = mydb.command( "ping" );
 				System.out.println("Command [ping] = " + cmm2 );
@@ -72,9 +66,10 @@ public class ConnectArbiterTest {
 				}
 			//} catch(com.mongodb.MongoServerSelectionException e) {
 			} catch(Exception e) {
-					String errmsg = "Host [" + hosts + ":" + port + "]"
-							+ "(IF Arbiter?? the Message is OK) is MongoServerSelectionException:" + e.getMessage();
-					System.err.println(errmsg);
+					//String errmsg = "Host [" + hosts + ":" + port + "]"
+					//		+ "(IF Arbiter?? the Message is OK) is MongoServerSelectionException:" + e.getMessage();
+					//System.err.println(e + " : " + e.getMessage());
+					e.printStackTrace(System.err);
 				}
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
