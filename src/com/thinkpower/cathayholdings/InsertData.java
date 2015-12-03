@@ -5,7 +5,9 @@ package com.thinkpower.cathayholdings;
 
 import java.io.File;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.mongodb.BasicDBObject;
@@ -40,11 +42,16 @@ public class InsertData {
 	//DB List
 	private List<DB> listOfDB = new ArrayList<DB>();
 	
-	private String collectionName = "pocfiles_meta";	//mongodb meta collection name
-	private String gridfsName = "pocfiles";	//gridfs collection name
+	//private String collectionName = "pocfiles_meta";	//mongodb meta collection name
+	//private String gridfsName = "pocfiles";	//gridfs collection name
 	
 	
 	private List<String> storeKeyList = new ArrayList<String>();
+	
+	/**
+	 * Constructor [For Test]
+	 */
+	public InsertData() {}
 	
 	/**
 	 * @param dbUrl : 192.168.1.103:27017
@@ -92,7 +99,7 @@ public class InsertData {
 		}
 		
 		long s3 = System.currentTimeMillis();
-		System.out.println("Constructor Create DB Time is [" + (s3 - s1) + " ms.]");
+		System.out.println("★★★Constructor Create DB Connect Time is [" + (s3 - s1) + " ms.]");
 	}
 	
 	/**
@@ -154,14 +161,21 @@ public class InsertData {
 	 */
 	public void insertData(DB focusDB, int forLoops, boolean hasImgFlag, String filePath) {
 		long s1 = System.currentTimeMillis();
+		long rows = 0;
 		try {
-			DBCollection collection = focusDB.getCollection(collectionName);
 			String _dbName = focusDB.getName();
+			String _collectionName = _dbName + "_meta";
+			String _gridfsName = _dbName;
+			
+			System.out.println("DB [" + _dbName + "] Collection Name [" + _collectionName + "]. "
+					+ "GridfsName = " + _gridfsName);
+			
+			DBCollection collection = focusDB.getCollection(_collectionName);
 			
 			File[] aryOfFile = null;
 			GridFS gridfs = null;
 			if(hasImgFlag) {
-				gridfs = new GridFS(focusDB, gridfsName);
+				gridfs = new GridFS(focusDB, _gridfsName);
 				
 				File _file = new File(filePath);
 				//System.out.println("_file is " + _file.isDirectory());
@@ -170,7 +184,7 @@ public class InsertData {
 			
 			for(int i=0;i<forLoops;i++) {
 				BasicDBObject info = new BasicDBObject();
-				//info.put("_id", getIDKey("GN"));
+				info.put("_id", getIDKey(_collectionName));
 		        info.put("version", "1.0");
 		        info.put("filename", getRandomString());
 		        info.put("filepath", getRandomString());
@@ -179,22 +193,26 @@ public class InsertData {
 				
 				if(hasImgFlag) {
 					for(File file : aryOfFile) {
+						rows += 1;
 						//
 						// Store the file to MongoDB using GRIDFS
 						//
 						GridFSInputFile gfsFile = gridfs.createFile(file);
-						gfsFile.setId(getIDKey(getRandomString()));
+						gfsFile.setId(getIDKey(_gridfsName));
 						gfsFile.setFilename(file.getName());
 						gfsFile.save();
 					}
+				} else {
+					rows += 1;
 				}
 				
-				if((i % 20000) == 0)
+				if(i > 10000 && (i % 20000) == 0)
 					System.out.println("DB : " + _dbName + " DataRows : " + i);
 			}
 			
 			long s2 = System.currentTimeMillis();
-			System.out.println("insertData Time is [" + (s2 - s1) + " ms.]");
+			System.out.println("Insert into DB [" + _dbName + "] "
+					+ "DataRows is [" + rows + "] Time is [" + (s2 - s1) + " ms.]");
 		} catch(Exception e) {
 			e.printStackTrace(System.err);
 		}
@@ -202,22 +220,43 @@ public class InsertData {
 	
 	/**
 	 * 取得Key值<br>
-	 * _id/files_id均為數值。shard1 = 0~5000。shard2 = 5000~9999(用Random來產生)
+	 * _id/files_id均為數值。Range between in (1000000000000000 ~ 4000000000000000)<br>
+	 * Shard	Tags	Range<br>
+	 * SA1		OLD		1000000000000000 =< OLD <2000000000000000 <br>
+	 * SA1		NHC		2000000000000000 =< NHC <3000000000000000 <br>
+	 * SA2		LKC		3000000000000000 =< LKC <4000000000000000 <br>
 	 * @return
 	 */
-	public int getIDKey(String str) {
-		int rtnValue = 0;
+	public long getIDKey(String keyName) {
+		long s1 = System.currentTimeMillis();
+		long runTimes = 0; //判斷取Key時，跑幾次
+		long rtnValue = 0;
 		boolean runFlag = true;
 		while(runFlag) {
-			double randomNum = Math.random();
-			int ans = (int)(10000000 * randomNum);
+			runTimes++;
+			//double randomNum = Math.random();
+			long ans = (long)(Math.random() * (4000000000000000L - 1000000000000000L + 1)) + 1000000000000000L;
 			//System.out.println("randomNum = " + randomNum + " ans = " + ans);
-			String key = str + "_" + ans;
+			//ans = 2497550709547400L;
+			//System.out.println("ans = " + ans);
+			
+			//if(ans >= 1000000000000000L && ans < 4000000000000000L) {
+			//	System.out.println("ans = " + ans);
+			//}
+			String key = keyName + String.valueOf(ans); //collectionName + random Value
 			if(!storeKeyList.contains(key)) {
 				rtnValue = ans;
 				storeKeyList.add(key);
 				runFlag = false;
 			}
+		}
+		long s2 = System.currentTimeMillis();
+		//如果取得key值超過1秒，就print
+		if((s2 - s1) >= 1000) {
+			Date _d = new Date();
+			SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+			System.out.println("***Get ID Key [" + rtnValue + "] More than 1 sec [" + (s2 - s1) + " ms.] "
+					+ "RunTimes = " + runTimes + " Now is " + sdFormat.format(_d) + "***");
 		}
 		return rtnValue;
 	}
@@ -329,6 +368,17 @@ public class InsertData {
 			boolean imgFlag = false; //預設「沒有圖檔」
 			if(filePath != null && filePath.trim().length() > 0)
 				imgFlag = true; //有圖檔
+			
+			//Test Key
+			/*System.out.println("==========Test Key==========");
+			indata = new InsertData();
+			for(int i=0;i<dataRows;i++)
+				indata.getIDKey();
+			
+			for(String _key : indata.storeKeyList) {
+				System.out.println("Key is " + _key);
+			}*/
+			
 			
 			indata = new InsertData(url, dbList);
 			//一般
